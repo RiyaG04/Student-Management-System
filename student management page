@@ -1,0 +1,236 @@
+from tkinter import *
+from tkinter import ttk
+import pymysql as sql
+import tkinter.messagebox as tmsg
+import re
+from tkcalendar import DateEntry
+
+class Student():
+    def __init__(self,root):
+        self.root=root
+        self.root.title('STUDENT MANAGEMENT SYSTEM')
+        self.root.geometry('1500x900')
+        self.root.maxsize(1500,900)
+
+        TitleName=Label(self.root,text='STUDENT MANAGEMENT SYSTEM',bd=9,relief=RAISED,
+                         font=('lucida',50,'bold'),fg='pink',bg='blue')
+        TitleName.pack(side=TOP,fill=X)
+
+        #-----Database Variables------
+        self.roll=StringVar()
+        self.name = StringVar()
+        self.lname = StringVar()
+        self.email = StringVar()
+        self.gender = StringVar()
+        self.contact = StringVar()
+        self.dob=StringVar()
+        self.searchby= StringVar()
+        self.searchtext = StringVar()
+
+        #---------MANAGE FRAME--------
+        Frame1=Frame(self.root,bd=4,relief=RIDGE,bg='grey')
+        Frame1.place(x=20,y=100,width=500,height=680)
+        FrameTitle=Label(Frame1,text='STUDENT DETAILS',fg='purple',bg='black',font=('lucida',40,'bold'))
+        FrameTitle.grid(row=0,columnspan=2,pady=20,sticky='w')
+
+        RollLabel=Label(Frame1,text='Roll No.:',fg='cyan',bg='black',font=('lucida',20,'bold'))
+        RollLabel.grid(row=1,column=0,pady=10,padx=20,sticky="w")
+        RollText=Entry(Frame1,textvariable=self.roll,font=('lucida',15,'bold'),bd=5,relief=GROOVE)
+        RollText.grid(row=1,column=1,pady=10,padx=20,sticky='w')
+
+        NameLabel = Label(Frame1, text='Name:', fg='cyan', bg='black', font=('lucida', 20, 'bold'))
+        NameLabel.grid(row=2, column=0, pady=10, padx=20, sticky="w")
+        NameText = Entry(Frame1,textvariable=self.name, font=('lucida', 15, 'bold'), bd=5, relief=GROOVE)
+        NameText.grid(row=2, column=1, pady=10, padx=20, sticky='w')
+
+        LnameLabel = Label(Frame1, text='Lastname:', fg='cyan', bg='black', font=('lucida', 20, 'bold'))
+        LnameLabel.grid(row=3, column=0, pady=10, padx=20, sticky="w")
+        LnameText = Entry(Frame1,textvariable=self.lname, font=('lucida', 15, 'bold'), bd=5, relief=GROOVE)
+        LnameText.grid(row=3, column=1, pady=10, padx=20, sticky='w')
+
+        EmailLabel = Label(Frame1, text='E-mail:', fg='cyan', bg='black', font=('lucida', 20, 'bold'))
+        EmailLabel.grid(row=4, column=0, pady=10, padx=20, sticky="w")
+        EmailText = Entry(Frame1,textvariable=self.email,font=('lucida', 15, 'bold'), bd=5, relief=GROOVE)
+        EmailText.grid(row=4, column=1, pady=10, padx=20, sticky='w')
+
+        GenLabel = Label(Frame1, text='Gender:', fg='cyan', bg='black', font=('lucida', 20, 'bold'))
+        GenLabel.grid(row=5, column=0, pady=10, padx=20, sticky="w")
+        Gen=ttk.Combobox(Frame1,textvariable=self.gender,font=('lucida',13,'bold'),state='readonly')
+        Gen['values']=('Male','Female','Other')
+        Gen.grid(row=5,column=1,pady=10,padx=20,sticky='w')
+
+        ContactLabel = Label(Frame1, text='Contact No.:', fg='cyan', bg='black', font=('lucida', 20, 'bold'))
+        ContactLabel.grid(row=7, column=0, pady=10, padx=20, sticky="w")
+        ContactText = Entry(Frame1,textvariable=self.contact, font=('lucida', 15, 'bold'), bd=5, relief=GROOVE)
+        ContactText.grid(row=7, column=1, pady=10, padx=20, sticky='w')
+
+        DobLabel = Label(Frame1, text='D.O.B.:', fg='cyan', bg='black', font=('lucida', 20, 'bold'))
+        DobLabel.grid(row=6, column=0, pady=10, padx=20, sticky="w")
+        DobText = DateEntry(Frame1,textvariable=self.dob,selectmode='day',state='readonly')
+        DobText.grid(row=6, column=1, pady=10, padx=20, sticky='w')
+
+        AddressLabel = Label(Frame1, text='Address:', fg='cyan', bg='black', font=('lucida', 20, 'bold'))
+        AddressLabel.grid(row=8, column=0, pady=10, padx=20, sticky="w")
+        self.AddressText = Text(Frame1,width=20,height=3,font=('lucida', 15, 'bold'), bd=5)
+        self.AddressText.grid(row=8, column=1, pady=10, padx=20, sticky='w')
+
+        #-----Button Frame------
+        Frame2 = Frame(Frame1, bd=3, relief=RIDGE, bg='orange')
+        Frame2.place(x=15, y=620, width=410)
+
+        AddButton=Button(Frame2,text='ADD',width=10,command=self.add_students).grid(row=0,column=0,padx=10,pady=10)
+        UpdateButton = Button(Frame2, text='UPDATE',command=self.update_data, width=10).grid(row=0, column=1, padx=10, pady=10)
+        DeleteButton = Button(Frame2, text='DELETE',command=self.delete_data, width=10).grid(row=0, column=2, padx=10, pady=10)
+        ClearButton = Button(Frame2, text='CLEAR',command=self.clear, width=10).grid(row=0, column=3, padx=10, pady=10)
+
+        #-------Detail Frame---------
+        Frame3 = Frame(self.root, bd=4, relief=RIDGE, bg='grey')
+        Frame3.place(x=550, y=100, width=920, height=680)
+
+        SearchLabel = Label(Frame3, text='SEARCH BY:', fg='purple', bg='red', font=('lucida', 20, 'bold'))
+        SearchLabel.grid(row=0, column=0, pady=20,padx=20, sticky='w')
+        Search = ttk.Combobox(Frame3,textvariable=self.searchby, font=('lucida', 13, 'bold'),width=10, state='readonly')
+        Search['values'] = ('roll_no', 'name', 'contact')
+        Search.grid(row=0, column=1, pady=10, padx=20, sticky='w')
+        SearchText = Entry(Frame3, textvariable=self.searchtext,font=('lucida', 10, 'bold'), bd=5,width=20, relief=GROOVE)
+        SearchText.grid(row=0, column=2, pady=10, padx=20, sticky='w')
+
+        SearchButton = Button(Frame3, text='SEARCH', width=10,pady=5,command=self.search_data).grid(row=0, column=3, padx=10, pady=10)
+        ShowAllButton = Button(Frame3, text='SHOW ALL', width=10,pady=5,command=self.fetch_data).grid(row=0, column=4, padx=10, pady=10)
+
+        # -----Table Frame------
+        Frame4 = Frame(Frame3, bd=3, relief=RIDGE, bg='cyan')
+        Frame4.place(x=10, y=70, width=870,height=590)
+
+        ScrollX=Scrollbar(Frame4,orient=HORIZONTAL)
+        ScrollY=Scrollbar(Frame4,orient=VERTICAL)
+        self.StudentTable=ttk.Treeview(Frame4,columns=("Roll No.","Name","Lastname","Email","Gender","D.O.B","Contact",
+                                                       "Address"),xscrollcommand=ScrollX,yscrollcommand=ScrollY)
+        ScrollX.pack(side=BOTTOM,fill=X)
+        ScrollY.pack(side=RIGHT,fill=Y)
+        ScrollX.config(command=self.StudentTable.xview)
+        ScrollY.config(command=self.StudentTable.yview)
+        self.StudentTable.heading("Roll No.",text="Roll No.")
+        self.StudentTable.heading("Name", text="Name")
+        self.StudentTable.heading("Lastname", text="Lastname")
+        self.StudentTable.heading("Email", text="E-mail")
+        self.StudentTable.heading("Gender", text="Gender")
+        self.StudentTable.heading("D.O.B", text="D.O.B")
+        self.StudentTable.heading("Contact", text="Contact")
+        self.StudentTable.heading("Address", text="Address")
+
+        self.StudentTable['show']='headings'
+        self.StudentTable.column("Roll No.", width=100)
+        self.StudentTable.column("Name", width=100)
+        self.StudentTable.column("Lastname",width=100)
+        self.StudentTable.column("Email",width=100)
+        self.StudentTable.column("Gender", width=100)
+        self.StudentTable.column("D.O.B", width=100)
+        self.StudentTable.column("Contact", width=100)
+        self.StudentTable.column("Address", width=100)
+
+        self.StudentTable.pack(fil=BOTH,expand=1)
+        self.StudentTable.bind("<ButtonRelease-1>",self.select_data)
+        self.fetch_data()
+
+    def add_students(self):
+        flag=1
+        if self.roll.get()=="" or self.name.get()=="" or self.lname.get()=="" or self.email.get()=="" or self.gender.get()=="" or self.contact.get()=="" or self.dob.get()=="" or self.AddressText.get('1.0',END)=="":
+            flag=0
+            tmsg.showerror("All fields are mandatory to fill")
+        if re.search("^[a-z A-Z 0-9_\-\.]+[@][a-z]+[\.][a-z]{2,3}$",self.email.get())==None:
+            flag=0
+            tmsg.showerror("Enter Valid email address")
+        if re.search("^[0-9]{10}$",self.contact.get())==None:
+            flag=0
+            tmsg.showerror("Enter Valid contact number")
+
+        elif flag==1:
+            try:
+                db=sql.connect(host='localhost',user='root',passwd='ducat123',db='ducati')
+                cur=db.cursor()
+                q="insert into studentmanage values('%s','%s','%s','%s','%s','%s','%s','%s')"%(self.roll.get(),self.name.get(),self.lname.get(),
+                                                                 self.email.get(),
+                                                                 self.gender.get(),self.dob.get(),self.contact.get(),
+                                                                 self.AddressText.get('1.0',END))
+                cur.execute(q)
+                db.commit()
+                self.fetch_data()
+                self.clear()
+                db.close()
+                tmsg.showinfo("SUCCESSFULLY SAVED THE RECORD!!!!")
+            except:
+                tmsg.showerror("Entered Roll number already exist!!!")
+
+    def fetch_data(self):
+        db = sql.connect(host='localhost', user='root', passwd='ducat123', db='ducati')
+        cur = db.cursor()
+        q="select *from studentmanage"
+        cur.execute(q)
+        result=cur.fetchall()
+        if len(result)!=0:
+            self.StudentTable.delete(*self.StudentTable.get_children())
+            for i in result:
+                self.StudentTable.insert("",END,values=i)
+            db.commit()
+        db.close()
+    def clear(self):
+        self.roll.set("")
+        self.name.set("")
+        self.lname.set("")
+        self.email.set("")
+        self.gender.set("")
+        self.dob.set("")
+        self.contact.set("")
+        self.AddressText.delete('1.0',END)
+
+    def select_data(self,ev):                           #to select data from table and for event generate write ev
+        select_row=self.StudentTable.focus()
+        content=self.StudentTable.item(select_row)
+        row=content['values']
+        self.roll.set(row[0])
+        self.name.set(row[1])
+        self.lname.set(row[2])
+        self.email.set(row[3])
+        self.gender.set(row[4])
+        self.dob.set(row[5])
+        self.contact.set(row[6])
+        self.AddressText.delete('1.0',END)
+        self.AddressText.insert(END,row[7])
+    def update_data(self):
+        db = sql.connect(host='localhost', user='root', passwd='ducat123', db='ducati')
+        cur = db.cursor()
+        cur.execute("update studentmanage set name=%s,lastname=%s,email=%s,gender=%s,dob=%s,contact=%s,address=%s where roll_no=%s",
+                                (self.name.get(), self.lname.get(),
+                                 self.email.get(),
+                                 self.gender.get(), self.dob.get(), self.contact.get(),
+                                 self.AddressText.get('1.0', END),self.roll.get()))
+        db.commit()
+        self.fetch_data()
+        self.clear()
+        db.close()
+        tmsg.showinfo("SUCCESSFULLY SAVED THE RECORD!!!!")
+    def delete_data(self):
+        db = sql.connect(host='localhost', user='root', passwd='ducat123', db='ducati')
+        cur = db.cursor()
+        cur.execute("delete from studentmanage where roll_no=%s",self.roll.get())
+        db.commit()
+        db.close()
+        self.fetch_data()
+        self.clear()
+    def search_data(self):
+        db = sql.connect(host='localhost', user='root', passwd='ducat123', db='ducati')
+        cur = db.cursor()
+        cur.execute("select *from studentmanage where "+ str(self.searchby.get()) + " like '%" + str(self.searchtext.get())+ "%' ")
+        result = cur.fetchall()
+        if len(result) != 0:
+            self.StudentTable.delete(*self.StudentTable.get_children())
+            for i in result:
+                self.StudentTable.insert("", END, values=i)
+            db.commit()
+        db.close()
+
+if __name__=='__main__':
+    root=Tk()
+    s1=Student(root)
+    root.mainloop()
