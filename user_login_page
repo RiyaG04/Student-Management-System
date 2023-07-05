@@ -1,0 +1,142 @@
+from tkinter import*
+import pymysql as sql
+from tkinter import ttk
+import tkinter.messagebox as tmsg
+from PIL import Image,ImageTk
+import re
+
+
+class LoginWindow:
+    def __init__(self,root):
+        self.root = root
+        self.root.title("User Registration Page")
+        self.root.geometry("1350x800+0+0")
+        self.root.config(bg="light green")
+        #--------------BACKGROUND COLOURS---------------
+        LeftLabel=Label(self.root,bg="#08A3D2")
+        LeftLabel.place(x=0,y=0,relheight=1,width=700)
+        RightLabel = Label(self.root, bg="#031F3C")
+        RightLabel.place(x=700, y=0, relheight=1, relwidth=1)
+
+        #------------FRAMES-----------------------
+        LoginFrame=Frame(self.root,bg="white")
+        LoginFrame.place(x=250,y=100,width=800,height=500)
+
+        Title=Label(LoginFrame,text="LOGIN HERE",font=("times new roman",30,"bold"),bg="white",fg="#08A3D2").place(x=250,y=50)
+
+        Email= Label(LoginFrame, text="E-MAIL ADDRESS", font=("times new roman", 18, "bold"), bg="white",fg="gray").place(x=220, y=150)
+        self.TextEmail=Entry(LoginFrame,font=("times new roman",15),bg="light gray")
+        self.TextEmail.place(x=220,y=180,width=350,height=35)
+
+        Password = Label(LoginFrame, text="PASSWORD", font=("times new roman", 18, "bold"), bg="white",fg="gray").place(x=220, y=250)
+        self.TextPassword = Entry(LoginFrame, font=("times new roman", 15), bg="light gray")
+        self.TextPassword.place(x=220, y=280, width=350, height=35)
+
+        ButtonRegister=Button(LoginFrame,cursor="hand2",command=self.RegisterWindow,text="Register New Account?",font=("times new roman",16,"bold"),bg="white",fg="#B00857",bd=0).place(x=220,y=330)
+        ButtonForget = Button(LoginFrame, cursor="hand2", command=self.ForgetPasswordWindow, text="Forget Password?",font=("times new roman", 16, "bold"), bg="white", fg="red", bd=0).place(x=450,y=330)
+        ButtonLogin=Button(LoginFrame,text="LOGIN",command=self.login,font=("times new roman",18,"bold"),fg="white",bg="#B00857",cursor="hand2").place(x=230,y=390,width=180,height=40)
+
+        # -------------Image----------------
+        path = "C:/Users/RIYA GUPTA/Downloads/WhatsApp Image 2022-08-25 at 12.29.54 PM.jpeg"
+        self.bg1 = ImageTk.PhotoImage(Image.open(path))
+        bg1 = Label(self.root, image=self.bg1).place(x=180, y=190)  # rel means according to root window size
+
+    def Reset(self):
+        self.QuestionCombo.current(0)
+        self.NpassText.delete(0,END)
+        self.AnswerText.delete(0,END)
+        self.TextPassword.delete(0,END)
+        self.TextEmail.delete(0,END)
+
+
+    def ForgetPassword(self):
+        if self.QuestionCombo.get()=="Select" or self.AnswerText.get()=="" or self.NpassText.get()=="":
+            tmsg.showerror("ERROR!!!", "All fields are required",parent=self.root2)
+        else:
+            try:
+                db=sql.connect(host='localhost',user='root',passwd='ducat123',db='ducati')
+                cur=db.cursor()
+                cur.execute("select * from forms where email=%s and question=%s and answer=%s",(self.TextEmail.get(),self.QuestionCombo.get(),self.AnswerText.get()))
+                row=cur.fetchone()
+                if row==None:
+                    tmsg.showerror("ERROR!!!", "Please select correct question or answer to reset the password",parent=self.root2)
+                else:
+                    cur.execute("update forms set password=%s where email=%s",(self.NpassText.get(),self.TextEmail.get()))
+
+                    db.commit()
+                    db.close()
+                    tmsg.showinfo("SUCCESS!!!","Password successfully reset,Now login with new password",parent=self.root2)
+                    self.Reset()
+                    self.root2.destroy()
+            except Exception as e:
+                tmsg.showerror("ERROR!!!",e,parent=self.root2)
+
+    def ForgetPasswordWindow(self):
+        if self.TextEmail.get()=="":
+            tmsg.showerror("ERROR!!!","Please enter email address to reset the password")
+        else:
+            try:
+                db=sql.connect(host='localhost',user='root',passwd='ducat123',db='ducati')
+                cur=db.cursor()
+                cur.execute("select * from forms where email= %s",self.TextEmail.get())
+                row=cur.fetchone()
+                if row==None:
+                    tmsg.showerror("ERROR!!!", "Please enter valid email address to reset the password")
+                else:
+                    db.close()
+                    self.root2 = Toplevel()  # on the same file we get the new page
+                    self.root2.title("Forget Password")
+                    self.root2.geometry("400x400+450+150")
+                    self.root2.config(bg="light gray")
+                    self.root2.focus_force()
+                    self.root2.grab_set()
+                    t = Label(self.root2, text="Forget Password", font=("times new roman", 18, "bold"), bg="light gray",fg="red").place(x=0, y=10, relwidth=1)
+
+                    Question = Label(self.root2, text="SECURITY QUESTION", font=("times new roman", 15, "bold"),bg="light gray", fg="black").place(x=50, y=100)
+                    self.QuestionCombo = ttk.Combobox(self.root2, font=("times new roman", 15), state='readonly',justify=CENTER)
+                    self.QuestionCombo['values'] = ('Select', "First Pet Name", "Your Favourite Car", "Your Best Friend")
+                    self.QuestionCombo.place(x=50, y=130, width=250)
+                    self.QuestionCombo.current(0)
+
+                    Answer = Label(self.root2, text="ANSWER", font=("times new roman", 15, "bold"), bg="light gray",fg="black").place(x=50, y=190)
+                    self.AnswerText = Entry(self.root2, font=("times new roman", 15), bg="white")
+                    self.AnswerText.place(x=50, y=220, width=250)
+
+                    NewPassword = Label(self.root2, text="NEW PASSWORD", font=("times new roman", 15, "bold"),bg="light gray", fg="black").place(x=50, y=280)
+                    self.NpassText = Entry(self.root2, font=("times new roman", 15), bg="white")
+                    self.NpassText.place(x=50, y=310, width=250)
+
+                    ResetPassword = Button(self.root2, text="RESET PASSWORD?", command=self.ForgetPassword,font=("times new roman", 15, "bold"), fg="white", bg="#B00857",cursor="hand2").place(x=90, y=350, width=200)
+            except Exception as e:
+                tmsg.showerror("ERROR!!!",e)
+
+
+    def RegisterWindow(self):
+        self.root.destroy()
+        import google_form
+    def login(self):
+        if self.TextEmail.get()=="" or self.TextPassword=="":
+            tmsg.showerror("ERROR!!!","All Fields Are Required")
+        elif re.search("^[a-z A-Z 0-9_\-\.]+[@][a-z]+[\.][a-z]{2,3}$",self.TextEmail.get())==None:
+            tmsg.showerror("Enter Valid email address")
+        else:
+            try:
+                db=sql.connect(host='localhost',user='root',passwd='ducat123',db='ducati')
+                cur=db.cursor()
+                cur.execute("select * from forms where email=%s and password=%s",(self.TextEmail.get(),self.TextPassword.get()))
+                row=cur.fetchone()
+                if row==None:
+                    tmsg.showerror("ERROR!!!","Username Invalid or Password")
+
+                else:
+                    tmsg.showinfo("SUCCESS!!!","Successfull Login")
+                    self.root.destroy()
+                    import user_page
+                db.close()
+            except Exception as e:
+                tmsg.showerror("ERROR!!!",e)
+
+
+root=Tk()
+obj1=LoginWindow(root)
+root.mainloop()
