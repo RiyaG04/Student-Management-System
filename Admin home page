@@ -1,0 +1,167 @@
+from tkinter import *
+from tkinter import ttk
+import pymysql as sql
+import tkinter.messagebox as tmsg
+
+class HomePage:
+    def __init__(self,root):
+        self.root = root
+        self.root.title("INFORMATION OF BOOKS SUBMIT BY ADMIN")
+        self.root.geometry("1350x800+0+0")
+        self.root.config(bg="#08A3D2")
+
+        #--------Database variables-----------
+        self.book = StringVar()
+        self.author = StringVar()
+        self.quantity = StringVar()
+        self.searchby = StringVar()
+        self.searchtext = StringVar()
+
+        #-----------FRAME1-------------
+        Frame1 = Frame(self.root, bd=4, relief=RIDGE, bg='light grey')
+        Frame1.place(x=20, y=70, width=470, height=680)
+        FrameTitle = Label(Frame1, text=' BOOKS DETAILS ', fg='purple', bg='black', font=('times new roman', 40, 'bold'))
+        FrameTitle.grid(row=2, columnspan=1, pady=0,sticky='w')
+
+        BookLabel = Label(Frame1, text='BOOK NAME:', bg='light gray', fg='black', font=('lucida', 20, 'bold'))
+        BookLabel.place(x=0,y=100)
+        BookText = Entry(Frame1, textvariable=self.book,font=('lucida', 15, 'bold'), bd=5, relief=GROOVE)
+        BookText.place(x=230,y=100,width=230,height=40)
+
+        AuthorLabel = Label(Frame1, text='AUTHOR NAME:', bg='light gray', fg='black', font=('lucida', 20, 'bold'))
+        AuthorLabel.place(x=0, y=170)
+        AuthorText = Entry(Frame1,textvariable=self.author, font=('lucida', 15, 'bold'), bd=5, relief=GROOVE)
+        AuthorText.place(x=230, y=170, width=230, height=40)
+
+        QuantityLabel = Label(Frame1, text='QUANTITY:', bg='light gray', fg='black', font=('lucida', 20, 'bold'))
+        QuantityLabel.place(x=0, y=240)
+        QuantityText = Entry(Frame1, textvariable=self.quantity,font=('lucida', 15, 'bold'), bd=5, relief=GROOVE)
+        QuantityText.place(x=230, y=240, width=230, height=40)
+
+        #-------------BUTTON--------------------------
+        AddButton = Button(Frame1, text='ADD', width=15,command=self.AddBooks,font=("times new roman",15,"bold"),fg="white",bg="#B00857",cursor="hand2").place(x=0,y=320)
+        UpdateButton = Button(Frame1, text='UPDATE',width=15,command=self.update_data,font=("times new roman",15,"bold"),fg="white",bg="#B00857",cursor="hand2").place(x=0,y=380)
+        DeleteButton = Button(Frame1, text='DELETE',width=15,command=self.delete_data,font=("times new roman",15,"bold"),fg="white",bg="#B00857",cursor="hand2").place(x=0,y=440)
+        ClearButton = Button(Frame1, text='CLEAR',width=15,command=self.clear,font=("times new roman",15,"bold"),fg="white",bg="#B00857",cursor="hand2").place(x=0,y=500)
+
+        #--------------Frame2----------------------
+        Frame2 = Frame(self.root, bd=4, relief=RIDGE, bg='light grey')
+        Frame2.place(x=510, y=70, width=830, height=680)
+
+        SearchLabel = Label(Frame2, text='SEARCH BY:', fg='purple', bg='black', font=('lucida', 20, 'bold'))
+        SearchLabel.grid(row=0, column=0, pady=20, padx=20, sticky='w')
+        Search = ttk.Combobox(Frame2, textvariable=self.searchby,font=('lucida', 13, 'bold'), width=10,state='readonly',justify=CENTER)
+        Search['values'] = ('Select','book','author')
+        Search.grid(row=0, column=1, pady=10, padx=20, sticky='w')
+        Search.current(0)
+        SearchText = Entry(Frame2,textvariable=self.searchtext, font=('lucida', 10, 'bold'), bd=5, width=20,relief=GROOVE)
+        SearchText.grid(row=0, column=2, pady=10, padx=20, sticky='w')
+        SearchButton = Button(Frame2, text='SEARCH', width=10,command=self.search_data, pady=5,font=("times new roman",10,"bold"),fg="white",bg="purple",cursor="hand2").grid(row=0, column=3,padx=10, pady=10)
+        ShowAllButton = Button(Frame2, text='SHOW ALL', width=10,command=self.fetch_data, pady=5,font=("times new roman",10,"bold"),fg="white",bg="purple",cursor="hand2").grid(row=0, column=4,padx=10,pady=10)
+
+        #--------------------FRAME3--------------------
+        Frame3 = Frame(Frame2, bd=3, relief=RIDGE, bg='cyan')
+        Frame3.place(x=0, y=65, width=820, height=608)
+
+        ScrollX = Scrollbar(Frame3, orient=HORIZONTAL)
+        ScrollY = Scrollbar(Frame3, orient=VERTICAL)
+        self.BookTable = ttk.Treeview(Frame3,columns=("BOOK NAME", "AUTHOR", "QUANTITY"), xscrollcommand=ScrollX, yscrollcommand=ScrollY)
+        ScrollX.pack(side=BOTTOM, fill=X)
+        ScrollY.pack(side=RIGHT, fill=Y)
+        ScrollX.config(command=self.BookTable.xview)
+        ScrollY.config(command=self.BookTable.yview)
+        self.BookTable.heading("BOOK NAME", text="BOOK NAME")
+        self.BookTable.heading("AUTHOR", text="AUTHOR")
+        self.BookTable.heading("QUANTITY", text="QUANTITY")
+
+        self.BookTable['show'] = 'headings'
+        self.BookTable.column("BOOK NAME", width=100)
+        self.BookTable.column("AUTHOR", width=100)
+        self.BookTable.column("QUANTITY", width=100)
+
+        self.BookTable.pack(fil=BOTH, expand=1)
+        self.BookTable.bind("<ButtonRelease-1>", self.select_data)
+        self.fetch_data()
+
+    def AddBooks(self):
+        if self.book.get()=="" or self.author.get()=="" or self.quantity.get()=="":
+            tmsg.showerror("ERROR!!!","All fields are mandatory to fill")
+        else:
+            try:
+                db=sql.connect(host='localhost',user='root',passwd='ducat123',db='ducati')
+                cur=db.cursor()
+                cur.execute("select * from abooks where book=%s and author=%s",(self.book.get(),self.author.get()))
+                row = cur.fetchone()
+                if row!=None:
+                    tmsg.showerror("ERROR!!!", " Same Book and Author name exist")
+                else:
+                    q = "insert into abooks values('%s','%s','%s')" % (self.book.get(), self.author.get(), self.quantity.get())
+                    cur.execute(q)
+                    db.commit()
+                    self.fetch_data()
+                    self.clear()
+                    db.close()
+                    tmsg.showinfo("SUCCESSFULLY SAVED THE RECORD!!!!")
+            except Exception as e:
+                tmsg.showerror("ERROR!!!",e)
+
+    def fetch_data(self):
+        db = sql.connect(host='localhost', user='root', passwd='ducat123', db='ducati')
+        cur = db.cursor()
+        q="select *from abooks"
+        cur.execute(q)
+        result=cur.fetchall()
+        if len(result)!=0:
+            self.BookTable.delete(*self.BookTable.get_children())
+            for i in result:
+                self.BookTable.insert("",END,values=i)
+            db.commit()
+        db.close()
+
+    def clear(self):
+        self.book.set("")
+        self.author.set("")
+        self.quantity.set("")
+
+    def select_data(self,ev):                           #to select data from table and for event generate write ev
+        select_row=self.BookTable.focus()
+        content=self.BookTable.item(select_row)
+        row=content['values']
+        self.book.set(row[0])
+        self.author.set(row[1])
+        self.quantity.set(row[2])
+
+    def update_data(self):
+        db = sql.connect(host='localhost', user='root', passwd='ducat123', db='ducati')
+        cur = db.cursor()
+        cur.execute("update abooks set author=%s,quantity=%s where book=%s",(self.author.get(),self.quantity.get(),self.book.get()))
+        db.commit()
+        self.fetch_data()
+        self.clear()
+        db.close()
+        tmsg.showinfo("SUCCESS","SUCCESSFULLY UPDATE THE RECORD!!!!")
+
+    def search_data(self):
+        db = sql.connect(host='localhost', user='root', passwd='ducat123', db='ducati')
+        cur = db.cursor()
+        cur.execute("select *from abooks where " + str(self.searchby.get()) + " like '%" + str(self.searchtext.get()) + "%' ")
+        result = cur.fetchall()
+        if len(result) != 0:
+            self.BookTable.delete(*self.BookTable.get_children())
+            for i in result:
+                self.BookTable.insert("", END, values=i)
+            db.commit()
+        db.close()
+
+    def delete_data(self):
+        db = sql.connect(host='localhost', user='root', passwd='ducat123', db='ducati')
+        cur = db.cursor()
+        cur.execute("delete from abooks where book=%s and author=%s", (self.book.get(),self.author.get()))
+        db.commit()
+        db.close()
+        self.fetch_data()
+        self.clear()
+
+root=Tk()
+obj=HomePage(root)
+root.mainloop()
