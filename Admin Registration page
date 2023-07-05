@@ -1,0 +1,43 @@
+from tkinter import *
+from PIL import Image,ImageTk
+
+class HomePage:
+    def __init__(self,root):
+        self.root = root
+        self.root.title("Admin Registration Page")
+        self.root.geometry("1350x800+0+0")
+        self.root.config(bg="#08A3D2")
+
+        #----------------TITLE--------------------
+        TitleName = Label(self.root, text='LIBRARY MANAGEMENT SYSTEM', bd=9, relief=RAISED,font=('lucida', 50, 'bold'), fg='pink', bg='blue')
+        TitleName.pack(side=TOP, fill=X)
+
+        #---------------FRAME----------------------
+        LeftLabel = Label(self.root, bg="deep sky blue")
+        LeftLabel.place(x=110, y=90, relheight=1, width=550)
+        RightLabel = Label(self.root, bg="#031F3C")
+        RightLabel.place(x=650, y=90, relheight=1, width=500)
+
+        #---------------IMAGES---------------------
+        path = "C:/Users/RIYA GUPTA/Downloads/WhatsApp Image 2022-08-25 at 12.29.55 PM.jpeg"
+        self.bg1 = ImageTk.PhotoImage(Image.open(path))
+        bg1 = Label(self.root, image=self.bg1).place(x=240, y=130)
+        path2="C:/Users/RIYA GUPTA/Downloads/WhatsApp Image 2022-08-25 at 12.29.53 PM.jpeg"
+        self.bg2 = ImageTk.PhotoImage(Image.open(path2))
+        bg1 = Label(self.root, image=self.bg2).place(x=800, y=130)
+
+        #-----------------BUTTON-------------------
+
+        ButtonLogin=Button(self.root,text="ADMIN",command=self.AdminLogin,font=("times new roman",18,"bold"),fg="white",bg="#B00857",cursor="hand2").place(x=250,y=400,width=180,height=40)
+        ButtonLogin=Button(self.root,text="USER",command=self.UserLogin,font=("times new roman",18,"bold"),fg="white",bg="#B00857",cursor="hand2").place(x=820,y=400,width=180,height=40)
+
+    def AdminLogin(self):
+        self.root.destroy()
+        import admin_login
+    def UserLogin(self):
+        self.root.destroy()
+        import login_page
+
+root=Tk()
+obj=HomePage(root)
+root.mainloop()
