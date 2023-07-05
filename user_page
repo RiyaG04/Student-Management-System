@@ -1,0 +1,243 @@
+from tkinter import *
+from tkinter import ttk
+import pymysql as sql
+import tkinter.messagebox as tmsg
+import re
+from tkcalendar import DateEntry
+
+
+class UserPage:
+    def __init__(self,root):
+        self.root = root
+        self.root.title("INFORMATION OF BOOKS OF USER")
+        self.root.geometry("1350x800+0+0")
+        self.root.config(bg="#08A3D2")
+
+        #------------DATABASE VARIABLES--------------
+        self.book1=StringVar()
+        self.author1=StringVar()
+        self.name=StringVar()
+        self.contact=StringVar()
+        self.email=StringVar()
+        self.gender=StringVar()
+        self.issue=StringVar()
+        self.searchby=StringVar()
+        self.searchtext=StringVar()
+
+        # -----------FRAME1---------------------
+        Frame1 = Frame(self.root, bd=4, relief=RIDGE, bg='light grey')
+        Frame1.place(x=20, y=70, width=470, height=680)
+        FrameTitle = Label(Frame1, text=' USERS  DETAILS ', fg='purple', bg='black',font=('times new roman', 40, 'bold'))
+        FrameTitle.grid(row=2, columnspan=1, pady=0, sticky='w')
+
+        NameLabel = Label(Frame1, text='NAME:', bg='light gray', fg='black', font=('lucida', 20, 'bold'))
+        NameLabel.place(x=0, y=80)
+        NameText = Entry(Frame1, textvariable=self.name, font=('lucida', 20, 'bold'), bd=5, relief=GROOVE)
+        NameText.place(x=230, y=80, width=230, height=40)
+
+        BookLabel = Label(Frame1, text='BOOK NAME:', bg='light gray', fg='black', font=('lucida', 20, 'bold'))
+        BookLabel.place(x=0, y=130)
+        BookText = Entry(Frame1, textvariable=self.book1, font=('lucida', 15, 'bold'), bd=5, relief=GROOVE)
+        BookText.place(x=230, y=130, width=230, height=40)
+
+        AuthorLabel = Label(Frame1, text='AUTHOR NAME:', bg='light gray', fg='black', font=('lucida', 20, 'bold'))
+        AuthorLabel.place(x=0, y=180)
+        AuthorText = Entry(Frame1, textvariable=self.author1, font=('lucida', 15, 'bold'), bd=5, relief=GROOVE)
+        AuthorText.place(x=230, y=180, width=230, height=40)
+
+        ContactLabel = Label(Frame1, text='CONTACT:', bg='light gray', fg='black', font=('lucida', 20, 'bold'))
+        ContactLabel.place(x=0, y=230)
+        ContactText = Entry(Frame1, textvariable=self.contact, font=('lucida', 15, 'bold'), bd=5, relief=GROOVE)
+        ContactText.place(x=230, y=230, width=230, height=40)
+
+        EmailLabel = Label(Frame1, text='E-MAIL:', bg='light gray', fg='black', font=('lucida', 20, 'bold'))
+        EmailLabel.place(x=0,y=280)
+        EmailText = Entry(Frame1, textvariable=self.email, font=('lucida', 15, 'bold'), bd=5, relief=GROOVE)
+        EmailText.place(x=230,y=280,width=230,height=40)
+
+        GenLabel = Label(Frame1, text='GENDER:', fg='black', bg="light gray", font=('lucida', 20, 'bold'))
+        GenLabel.place(x=0,y=330)
+        Gen = ttk.Combobox(Frame1, textvariable=self.gender, font=('lucida', 13, 'bold'), state='readonly',justify=CENTER)
+        Gen['values'] = ('SELECT','Male', 'Female', 'Other')
+        Gen.place(x=230,y=330,width=230,height=40)
+        Gen.current(0)
+
+        IssueLabel = Label(Frame1, text='ISSUE DATE:', fg='black', bg='light gray', font=('lucida', 20, 'bold'))
+        IssueLabel.place(x=0,y=380)
+        IssueText = DateEntry(Frame1, textvariable=self.issue, selectmode='day', font=('lucida', 20, 'bold'),state='readonly')
+        IssueText.place(x=230,y=380,width=230,height=40)
+
+        AddressLabel = Label(Frame1, text='ADDRESS:', fg='black', bg='light gray', font=('lucida', 20, 'bold'))
+        AddressLabel.place(x=0,y=430)
+        self.AddressText = Text(Frame1, width=20, height=3, font=('lucida', 15, 'bold'), bd=5)
+        self.AddressText.place(x=230,y=430,width=230,height=65)
+
+        # -----Button Frame------
+        Frame2 = Frame(Frame1, bd=3, relief=RIDGE, bg='orange')
+        Frame2.place(x=15, y=550, width=410)
+        AddButton = Button(Frame2, text='ADD', width=10, command=self.add_books).grid(row=0, column=0, padx=10,pady=10)
+        UpdateButton = Button(Frame2, text='UPDATE', command=self.update_books, width=10).grid(row=0, column=1, padx=10,pady=10)
+        DeleteButton = Button(Frame2, text='DELETE', command=self.delete_books, width=10).grid(row=0, column=2, padx=10,pady=10)
+        ClearButton = Button(Frame2, text='CLEAR', command=self.clear, width=10).grid(row=0, column=3, padx=10, pady=10)
+
+        # -------Detail Frame---------
+        Frame3 = Frame(self.root, bd=4, relief=RIDGE, bg='light grey')
+        Frame3.place(x=520, y=70, width=820, height=680)
+
+        SearchLabel = Label(Frame3, text='SEARCH BY:', fg='purple', bg='black', font=('lucida', 20, 'bold'))
+        SearchLabel.grid(row=0, column=0, pady=20, padx=20, sticky='w')
+        Search = ttk.Combobox(Frame3, textvariable=self.searchby, font=('lucida', 13, 'bold'), width=10,state='readonly')
+        Search['values'] = ('SELECT', 'name', 'contact')
+        Search.grid(row=0, column=1, pady=10, padx=20, sticky='w')
+        Search.current(0)
+        SearchText = Entry(Frame3, textvariable=self.searchtext, font=('lucida', 10, 'bold'), bd=5, width=20,relief=GROOVE)
+        SearchText.grid(row=0, column=2, pady=10, padx=20, sticky='w')
+        SearchButton = Button(Frame3, text='SEARCH', width=10, pady=5, command=self.search_data).grid(row=0, column=3,padx=10, pady=10)
+        ShowAllButton = Button(Frame3, text='SHOW ALL', width=10, pady=5, command=self.fetch_data).grid(row=0, column=4,padx=10,pady=10)
+
+        # -----Table Frame------
+        Frame4 = Frame(Frame3, bd=3, relief=RIDGE, bg='white')
+        Frame4.place(x=0, y=70, width=810, height=600)
+
+        ScrollX=Scrollbar(Frame4,orient=HORIZONTAL)
+        ScrollY=Scrollbar(Frame4,orient=VERTICAL)
+        self.UserTable=ttk.Treeview(Frame4,columns=("NAME","BOOK NAME","AUTHOR NAME","CONTACT","E-MAIL","GENDER","ISSUE DATE",
+                                                       "ADDRESS"),xscrollcommand=ScrollX,yscrollcommand=ScrollY)
+        ScrollX.pack(side=BOTTOM, fill=X)
+        ScrollY.pack(side=RIGHT, fill=Y)
+        ScrollX.config(command=self.UserTable.xview)
+        ScrollY.config(command=self.UserTable.yview)
+        self.UserTable.heading("NAME", text="NAME")
+        self.UserTable.heading("BOOK NAME", text="BOOK NAME")
+        self.UserTable.heading("AUTHOR NAME", text="AUTHOR NAME")
+        self.UserTable.heading("CONTACT", text="CONTACT")
+        self.UserTable.heading("E-MAIL", text="E-MAIL")
+        self.UserTable.heading("GENDER", text="GENDER")
+        self.UserTable.heading("ISSUE DATE", text="ISSUE DATE")
+        self.UserTable.heading("ADDRESS", text="ADDRESS")
+
+        self.UserTable['show'] = 'headings'
+        self.UserTable.column("NAME", width=100)
+        self.UserTable.column("BOOK NAME", width=100)
+        self.UserTable.column("AUTHOR NAME", width=100)
+        self.UserTable.column("CONTACT", width=100)
+        self.UserTable.column("E-MAIL", width=100)
+        self.UserTable.column("GENDER", width=100)
+        self.UserTable.column("ISSUE DATE", width=100)
+        self.UserTable.column("ADDRESS", width=100)
+
+        self.UserTable.pack(fil=BOTH, expand=1)
+        self.UserTable.bind("<ButtonRelease-1>", self.select_data)
+        self.fetch_data()
+
+    def add_books(self):
+        if self.name.get()=="" or self.book1.get()=="" or self.author1.get()=="" or self.contact.get()=="" or self.email.get()=="" or self.gender.get()=="" or self.issue.get()=="":
+            tmsg.showerror("ERROR!!!","All fields are mandatory")
+        elif re.search("^[a-z A-Z 0-9_\-\.]+[@][a-z]+[\.][a-z]{2,3}$",self.email.get())==None:
+            tmsg.showerror("ERROR!!","Enter Valid email address")
+        elif re.search("^[0-9]{10}$",self.contact.get())==None:
+            tmsg.showerror("ERROR!!""Enter Valid contact number")
+        else:
+            try:
+                db=sql.connect(host='localhost',user='root',passwd='ducat123',db='ducati')
+                cur=db.cursor()
+                book_name=self.book1.get()
+                author_name=self.author1.get()
+                cur.execute("select quantity from abooks where book=%s and author=%s",(book_name,author_name))
+                q=0
+                for i in cur:
+                    q=int(i[0])
+                    if q>=1:
+                        q=q-1
+                        cur.execute("update abooks set quantity=%s where book=%s and author=%s",(q,book_name,author_name))
+                        q="insert into userbooks values('%s','%s','%s','%s','%s','%s','%s','%s')"%(self.name.get(),self.book1.get(),self.author1.get(),
+                                                                 self.contact.get(),
+                                                                 self.email.get(),self.gender.get(),self.issue.get(),
+                                                                 self.AddressText.get('1.0',END))
+                        cur.execute(q)
+                        db.commit()
+                        self.fetch_data()
+                        self.clear()
+                        db.close()
+                        tmsg.showinfo("Book Available","SUCCESSFULLY SAVED THE RECORD!!!!")
+                    else:
+                        tmsg.showerror("Book Availiability","Not Found")
+            except Exception as e:
+                tmsg.showerror("ERROR",e)
+
+    def update_books(self):
+        db = sql.connect(host='localhost', user='root', passwd='ducat123', db='ducati')
+        cur = db.cursor()
+        cur.execute(
+            "update userbooks set author1=%s,contact=%s,email=%s,gender=%s,issue=%s,address=%s where book1=%s and name=%s",
+            (self.author1.get(),
+             self.contact.get(),
+             self.email.get(), self.gender.get(), self.issue.get(),
+             self.AddressText.get('1.0', END), self.book1.get(),self.name.get()))
+        db.commit()
+        self.fetch_data()
+        self.clear()
+        db.close()
+        tmsg.showinfo("SUCCESSFULLY UPDATE THE RECORD!!!!")
+    def delete_books(self):
+        db = sql.connect(host='localhost', user='root', passwd='ducat123', db='ducati')
+        cur = db.cursor()
+        cur.execute("delete from userbooks where name=%s", self.name.get())
+        db.commit()
+        db.close()
+        self.fetch_data()
+        self.clear()
+    def clear(self):
+        self.name.set("")
+        self.book1.set("")
+        self.author1.set("")
+        self.contact.set("")
+        self.email.set("")
+        self.gender.set("")
+        self.issue.set("")
+        self.AddressText.delete('1.0', END)
+
+    def select_data(self,ev):
+        select_row = self.UserTable.focus()
+        content = self.UserTable.item(select_row)
+        row = content['values']
+        self.name.set(row[0])
+        self.book1.set(row[1])
+        self.author1.set(row[2])
+        self.contact.set(row[3])
+        self.email.set(row[4])
+        self.gender.set(row[5])
+        self.issue.set(row[6])
+        self.AddressText.delete('1.0', END)
+        self.AddressText.insert(END, row[7])
+
+    def fetch_data(self):
+        db = sql.connect(host='localhost', user='root', passwd='ducat123', db='ducati')
+        cur = db.cursor()
+        q = "select *from userbooks"
+        cur.execute(q)
+        result = cur.fetchall()
+        if len(result) != 0:
+            self.UserTable.delete(*self.UserTable.get_children())
+            for i in result:
+                self.UserTable.insert("", END, values=i)
+            db.commit()
+        db.close()
+    def search_data(self):
+        db = sql.connect(host='localhost', user='root', passwd='ducat123', db='ducati')
+        cur = db.cursor()
+        cur.execute("select *from userbooks where " + str(self.searchby.get()) + " like '%" + str(self.searchtext.get()) + "%' ")
+        result = cur.fetchall()
+        if len(result) != 0:
+            self.UserTable.delete(*self.UserTable.get_children())
+            for i in result:
+                self.UserTable.insert("", END, values=i)
+            db.commit()
+        db.close()
+
+
+
+
+root=Tk()
+obj=UserPage(root)
+root.mainloop()
